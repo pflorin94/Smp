@@ -1,0 +1,343 @@
+org 100h
+
+include 'emu8086.inc'
+
+.code
+call introducere   
+hlt   
+   
+introducere proc   
+   call clear
+   
+printn "Proiect SMP"
+printn "Postaru Florian Stefan"
+printn "333AA"                                  
+printn " "
+printn "Apasati orice tasta pentru continuare..."     
+
+
+mov ah, 1
+int 21h 
+
+;sunet apasare tasta     
+;mov dl, 07h
+;mov ah, 2
+;int 21h
+call ecran1    
+ret
+introducere endp      
+hlt
+
+   
+ecran1 proc 
+;sunet apasare tasta     
+mov dl, 07h
+mov ah, 2
+int 21h
+    call clear     
+
+printn "Alegere optiune: "
+printn "1)Desenare cub 3D" 
+printn "2)Paint( desenare cu mouse) "
+printn "3)Iesire"
+
+
+        
+mov ah, 1
+int 21h
+  
+; prima optiune 
+cmp al, "1"     
+je cub  
+ 
+; a doua optiune 
+cmp al, "2"  
+je paint
+     
+; a treia optiune 
+cmp al, "3"  
+je iesire
+
+;accepta doar valoarea 1,2 si 3 altfel afiseaza ecranul cu meniu   
+cmp al, "3"
+printn "Alegere incorecta" 
+jg ecran1   
+
+cmp al, "2"
+jg ecran1
+
+cmp al, "1"  
+jmp ecran1
+   
+;ret
+ecran1 endp  
+
+
+;procedura iesire
+iesire proc
+;sunet apasate tasta
+mov dl, 07h
+mov ah, 2
+int 21h    
+call clear          
+printn "La revedere!" 
+hlt    
+ret
+iesire endp
+   
+
+;procedura desenare cu mouse
+paint proc    
+;sunet apasate tasta
+mov dl, 07h
+mov ah, 2
+int 21h    
+call clear    
+printn "Ati ales optiunea 2"
+
+jmp start
+oldX dw -1
+oldY dw 0
+start:
+mov ah, 00
+mov al, 13h ; mod grafic 256 culori, 320x200 pixels
+int 10h
+mov ax, 0 ; ini.ializare mouse
+int 33h
+cmp ax, 0
+;mov ax, 1 ; afi.are cursor mouse – op.ional
+;int 33h        
+printn "Pentru a reveni la meniul principal apasati tasta ESC"
+check_mouse_button:
+mov ax, 3
+int 33h ; preluare pozi.ie .i status butoane
+shr cx, 1 ; x/2 – în modul grafic este dublata coordonata x
+cmp bx, 1      
+
+jne xor_cursor:
+mov al, 1010b ; culoare punct
+jmp draw_pixel
+
+xor_cursor:
+cmp oldX, -1
+je not_required
+push cx
+push dx
+mov cx, oldX
+mov dx, oldY
+mov ah, 0dh
+int 10h
+xor al, 1111b
+mov ah, 0ch
+int 10h
+pop dx
+pop cx 
+
+not_required:
+mov ah, 0dh
+int 10h
+xor al, 1111b
+mov oldX, cx
+mov oldY, dx 
+
+draw_pixel:
+mov ah, 0ch
+int 10h        
+
+check_esc_key:
+mov dl, 255
+mov ah, 6
+int 21h
+cmp al, 27 ; esc?
+jne check_mouse_button 
+
+stop:    
+call ecran1       
+ret
+
+
+
+;procedura desenare cub
+cub proc 
+;sunet apasate tasta
+mov dl, 07h
+mov ah, 2
+int 21h    
+
+call clear 
+printn "Ati ales prima optiune"
+
+
+;jmp code
+w equ 100 ; dimensiune dreptunghi
+h equ 100
+;code: mov ah, 0
+mov al, 13h ; trecere in mod grafic 320x200
+int 10h  
+      
+
+; afisare latura principala superioara
+mov cx, 100+w ; coloana
+mov dx, 50 ; rand
+mov al, 50 ; alb
+u1: mov ah, 0ch ; afisare pixel
+int 10h
+dec cx
+cmp cx, 100
+jae u1       
+
+
+; afisare latura principala inferioara
+mov cx, 100+w    ; coloana
+mov dx, 50+h     ; rand
+mov al, 50       ; alb
+u2: mov ah, 0ch
+int 10h
+dec cx
+cmp cx, 100
+ja u2       
+
+
+; latura principala din stanga
+mov cx, 100      ; coloana
+mov dx, 50+h     ; rand
+mov al, 50       ; alb
+u3: mov ah, 0ch
+int 10h
+dec dx
+cmp dx, 50
+ja u3             
+
+
+; latura principala din dreapta
+mov cx, 100+w    ; coloana
+mov dx, 50+h     ; rand
+mov al, 50        ; alb
+u4: mov ah, 0ch
+int 10h
+dec dx
+cmp dx, 50
+ja u4          
+
+
+;latura oblica dreapta sus rosu
+mov cx, 100+w ; coloana
+mov dx, 50 ; rand
+mov al, 40 ; rosu
+u5: mov ah, 0ch ; afisare pixel
+int 10h
+inc cx
+cmp cx, 50 
+dec dx       ;pt latura oblica
+cmp dx, 10   ;
+jae u5
+
+
+;latura oblica stanga sus
+mov cx, 100 ; coloana
+mov dx, 50 ; rand
+mov al, 40 ; rosu
+u6: mov ah, 0ch ; afisare pixel
+int 10h
+inc cx
+cmp cx, 50 
+dec dx       ;pt latura oblica
+cmp dx, 10   ;
+jae u6   
+                         
+                         
+; afisare latura superioara rosu
+mov cx, 140+w ; coloana
+mov dx, 10 ; rand
+mov al, 40 ; rosu
+u7: mov ah, 0ch ; afisare pixel
+int 10h
+dec cx
+cmp cx, 140
+jae u7   
+  
+  
+;latura oblica dreapta jos
+mov cx, 100+w ; coloana
+mov dx, 50+h ; rand
+mov al, 40 ; rosu
+u8: mov ah, 0ch ; afisare pixel
+int 10h
+inc cx
+cmp cx, 100 
+dec dx       ;pt latura oblica
+cmp dx, 110   ;
+jae u8
+     
+  
+; latura extrema din dreapta rosu
+mov cx, 140+w    ; coloana
+mov dx, 110     ; rand
+mov al, 40        ; rosu
+u9: mov ah, 0ch
+int 10h
+dec dx
+cmp dx, 10
+ja u9  
+                         
+                         
+;latura oblica stanga jos  interior
+mov cx, 100 ; coloana
+mov dx, 150 ; rand
+mov al, 15 ; alb
+u10: mov ah, 0ch ; afisare pixel
+int 10h
+inc cx
+cmp cx, 50 
+dec dx       ;pt latura oblica
+cmp dx, 110   ;
+jae u10
+   
+     
+; afisare latura inferioara interior 
+mov cx, 140+w    ; coloana
+mov dx, 110       ; rand
+mov al, 15       ; alb
+u11: mov ah, 0ch
+int 10h
+dec cx
+cmp cx, 140
+ja u11       
+   
+      
+; latura din stanga interior
+mov cx, 140      ; coloana
+mov dx, 110     ; rand
+mov al, 15       ; alb
+u12: mov ah, 0ch
+int 10h
+dec dx
+cmp dx, 10
+ja u12  
+    
+
+; asteptare apasare tasta
+printn "Apasati orice tasta pentru revenirea la ecranul principal..."     
+
+
+mov ah, 1
+int 21h   
+call ecran1   
+ret
+cub endp   
+   
+   
+;procedura curatare ecran
+clear proc
+mov ah, 0
+mov al, 3
+int 10h
+ret
+clear endp
+   
+   
+   
+
+
+
+
